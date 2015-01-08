@@ -61,8 +61,9 @@ Example wildcard route:
    router:add(Router, [<<"rsc">>, {'+', id}], {controller_rsc, [{foo, <<"bar">>]})
 ```
 
-When you now call ```router:route(Router,[<<"rsc">>, <<"12312">>])```, you get 
-```[{route, {controller_rsc, [{foo, <<"bar">>}]}, [{id, <<"12312">>}]``` as result.
+When you now call ```router:route(Router,[<<"rsc">>, <<"12312">>])```, you get a list
+with route tuples with all matching destinations and the list of bound variables in a
+proplist. In this case: ```[{route, {controller_rsc, [{foo, <<"bar">>}]}, [{id, <<"12312">>}]```.
 
 You get a list of matching destinations, and all elements which are bound in a proplist
 as result.
