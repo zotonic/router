@@ -23,11 +23,12 @@
 -author("Maas-Maarten Zeeman <mmzeeman@xs4all.nl>").
 
 -export([new/0, delete/1]).
--export([add/3]).
+-export([add/3, remove/2]).
+
 -export([get_paths/2]).
+
 -export([match/2, match/3]).
 -export([route/2, route/3]).
--export([remove/2]).
 
 -include_lib("router/include/router.hrl").
 
@@ -120,7 +121,7 @@ delete(#router{node_table=NodeTable, wildcard_table=WildcardTable, trie_table=Tr
     true = ets:delete(PathTable),
     true = ets:delete(DestinationTable).
 
-% @doc Add a path to the router. Important: Make sure to call this synchronized.
+% @doc Add a path to the router. Important: Make sure add is called synchronized.
 %
 -spec add(router(), path(), destination()) -> ok.
 add(Router, Path, Destination) ->
@@ -128,7 +129,8 @@ add(Router, Path, Destination) ->
     ets:insert(Router#router.destination_table, #destination{path=Path, destination=Destination}),
     ok.
 
-% @doc Remove a destination. All paths to the destinations are removed.
+% @doc Remove a destination. All paths to the destinations are removed. Important:
+% make sure remove is called synchronized.
 %
 -spec remove(router(), destination()) -> ok.
 remove(Router, Destination) ->
