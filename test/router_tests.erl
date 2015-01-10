@@ -25,8 +25,13 @@ multiple_new_test() ->
 add_test() ->
     Router = router:new(),
 
+    ?assertEqual([], lists:sort(router:paths(Router))),
+
     _ = router:add(Router, [<<"a">>, <<"b">>], a),
     _ = router:add(Router, [<<"a">>, <<"c">>], a),
+
+    ?assertEqual([[<<"a">>, <<"b">>], [<<"a">>, <<"c">>]], 
+        lists:sort(router:paths(Router))),
 
     router:delete(Router).
 

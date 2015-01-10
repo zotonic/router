@@ -25,6 +25,8 @@
 -export([new/0, delete/1]).
 -export([add/3, remove/2]).
 
+-export([paths/1]).
+
 -export([get_paths/2]).
 
 -export([match/2, match/3]).
@@ -143,6 +145,12 @@ remove(Router, Destination) ->
                  try_remove_path(Router, Path)
              end || #destination{path=Path}=Dest <- Paths]
     end.
+
+
+% @doc Get all paths registered in the router.
+-spec paths(router()) -> list(path()).
+paths(Router) ->
+    [Path || #path{name=Path} <- ets:tab2list(Router#router.path_table)].
 
 
 %% @doc Get the associated paths from a match spec. 
