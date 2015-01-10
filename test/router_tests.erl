@@ -30,6 +30,27 @@ add_test() ->
 
     router:delete(Router).
 
+remove_test() ->
+    Router = router:new(),
+
+    _ = router:add(Router, [<<"a">>, <<"b">>], a),
+    _ = router:add(Router, [<<"a">>, <<"b">>], b),
+
+    _ = router:add(Router, [<<"a">>, <<"c">>], a),
+    _ = router:add(Router, [<<"a">>, <<"c">>], b),
+
+    ?assertEqual(2, length(router:get_paths(Router, a))),
+    ?assertEqual(2, length(router:get_paths(Router, b))),
+
+    router:remove(Router, a),
+    ?assertEqual(0, length(router:get_paths(Router, a))),
+    ?assertEqual(2, length(router:get_paths(Router, b))),
+
+    router:remove(Router, b),
+    ?assertEqual(0, length(router:get_paths(Router, a))),
+    ?assertEqual(0, length(router:get_paths(Router, b))),
+
+    ok.
 
 get_paths_test() ->
     Router = router:new(),

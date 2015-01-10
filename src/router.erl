@@ -27,6 +27,7 @@
 -export([get_paths/2]).
 -export([match/2, match/3]).
 -export([route/2, route/3]).
+-export([remove/2]).
 
 -include_lib("router/include/router.hrl").
 
@@ -119,13 +120,28 @@ delete(#router{node_table=NodeTable, wildcard_table=WildcardTable, trie_table=Tr
     true = ets:delete(PathTable),
     true = ets:delete(DestinationTable).
 
-%% %doc Add a path to the router. Important: Make sure to call this synchronized.
-%%
+% @doc Add a path to the router. Important: Make sure to call this synchronized.
+%
 -spec add(router(), path(), destination()) -> ok.
 add(Router, Path, Destination) ->
     trie_add(Router, Path),
     ets:insert(Router#router.destination_table, #destination{path=Path, destination=Destination}),
     ok.
+
+% @doc Remove a destination. All paths to the destinations are removed.
+%
+-spec remove(router(), destination()) -> ok.
+remove(Router, Destination) ->
+    case ets:match_object(Router#router.destination_table, #destination{destination=Destination, _='_'}) of
+        [] -> 
+            ignore;
+        Paths -> 
+            [begin 
+                 ets:delete_object(Router#router.destination_table, Dest),
+                 try_remove_path(Router, Path)
+             end || #destination{path=Path}=Dest <- Paths]
+    end.
+
 
 %% @doc Get the associated paths from a match spec. 
 %%
@@ -270,6 +286,61 @@ do_trie_add_path(Router, {Node, Word, Child}) ->
             ets:insert(Router#router.node_table, TrieNode),
             ets:insert(Router#router.trie_table, Trie),
             insert_wildcard(Router, Node, Word)
+    end.
+
+%% Remove Path
+%%
+try_remove_path(Router, Path) ->
+    %% This should be called synchronized
+    case ets:member(Router#router.destination_table, Path) of
+        false ->
+            PathRecord = #path{name=Path},
+            ets:delete_object(Router#router.path_table, PathRecord),
+            case ets:lookup(Router#router.path_table, Path) of
+                [] ->
+                    trie_delete(Router, Path);
+                _ ->
+                    ignore
+            end;
+        true -> 
+            ok
+        end.
+
+trie_delete(Router, Path) ->
+    case ets:lookup(Router#router.node_table, Path) of
+        [#trie_node{edge_count=0}] ->
+            ets:delete(Router#router.node_table, Path),
+            trie_delete_path(Router, lists:reverse(triples(Path)));
+        [#trie_node{path=NodePath}] when NodePath =/= Path->
+            ets:update_element(Router#router.node_table, Path, {#trie_node.path, Path});
+        _ ->
+            ignore
+    end.
+
+trie_delete_path(_Router, []) ->
+    ok;
+trie_delete_path(Router, [{NodeId, Word, _} | RestPath]) ->
+    Edge = #trie_edge{node_id=NodeId, word=Word},
+    ets:delete(Router#router.trie_table, Edge),
+
+    case ets:lookup(Router#router.node_table, NodeId) of
+        [#trie_node{edge_count=1, path=undefined}] ->
+            ets:delete(Router#router.node_table, NodeId),
+            trie_delete_path(Router, RestPath);
+        [#trie_node{edge_count=1, path=Path}] ->
+            ets:update_counter(Router#router.node_table, NodeId, {#trie_node.edge_count, -1}),
+            case ets:lookup(Router#router.path_table, Path) of
+                [] ->
+                    %% This topic is gone too.
+                    trie_delete(Router, Path);
+                _ ->
+                    ok
+            end;
+        [#trie_node{edge_count=Count}] when Count >= 1 ->
+            ets:update_counter(Router#router.node_table, NodeId, {#trie_node.edge_count, -1});
+
+        [] ->
+            throw({notfound, NodeId})
     end.
 
 %%
