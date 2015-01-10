@@ -310,6 +310,7 @@ trie_delete(Router, Path) ->
     case ets:lookup(Router#router.node_table, Path) of
         [#trie_node{edge_count=0}] ->
             ets:delete(Router#router.node_table, Path),
+            ets:delete(Router#router.wildcard_table, Path),
             trie_delete_path(Router, lists:reverse(triples(Path)));
         [#trie_node{path=NodePath}] when NodePath =/= Path->
             ets:update_element(Router#router.node_table, Path, {#trie_node.path, Path});
@@ -326,6 +327,7 @@ trie_delete_path(Router, [{NodeId, Word, _} | RestPath]) ->
     case ets:lookup(Router#router.node_table, NodeId) of
         [#trie_node{edge_count=1, path=undefined}] ->
             ets:delete(Router#router.node_table, NodeId),
+            ets:delete(Router#router.wildcard_table, NodeId),
             trie_delete_path(Router, RestPath);
         [#trie_node{edge_count=1, path=Path}] ->
             ets:update_counter(Router#router.node_table, NodeId, {#trie_node.edge_count, -1}),
