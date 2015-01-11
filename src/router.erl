@@ -23,6 +23,8 @@
 -author("Maas-Maarten Zeeman <mmzeeman@xs4all.nl>").
 
 -export([new/0, delete/1]).
+-export([info/1]).
+
 -export([add/3, remove/2, remove_path/3]).
 
 -export([paths/1]).
@@ -124,6 +126,15 @@ new() ->
         wildcard_table=WildcardTable,
         path_table=PathTable, 
         destination_table=DestinationTable}.
+
+%% @doc Get usage statistics 
+%%
+info(Router) ->
+    [{nodes, ets:info(Router#router.node_table, size)}, 
+     {edges, ets:info(Router#router.trie_table, size)}, 
+     {wildcards, ets:info(Router#router.wildcard_table, size)}, 
+     {paths, ets:info(Router#router.path_table, size)}, 
+     {destinations, ets:info(Router#router.destination_table, size)}].
 
 %% @doc Delete the router. Deletes the all the ets tables.
 %%

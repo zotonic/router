@@ -2,6 +2,7 @@
 
 -module(router_tests).
 
+-include_lib("proper/include/proper.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
 -include_lib("router/include/router.hrl").
@@ -134,3 +135,59 @@ match_mf_wildcard_test() ->
     ?assertEqual([[<<"a">>, {'+', id, {erlang, is_integer}}]], R2),
 
     ok.
+
+
+subscribe_props(Router) ->
+    ?FORALL(
+       Paths,
+       list(list(weighted_union([
+                       {1, router:single_level_wildcard()}, 
+                       {5, binary()}
+                   ]))),
+       begin 
+           %% Test subscribing to the topics one by one.
+           add_multi(Router, Paths, []),
+
+           %% Now, unsubscribe from all topics. 
+           %%
+           %% Because unsubscribe removes multi regestrations we have to 
+           %% setify the Topics before running the test.
+           remove_multi(Router, setify(Paths)),
+
+           %% And we should have no more nodes and edges dangling
+           ?assertEqual([{nodes, 0}, {edges, 0}, 
+                   {wildcards, 0}, {paths, 0}, {destinations, 0}], router:info(Router)),
+
+           true
+       end).
+
+add_multi(_Router, [], _) ->
+    ok;
+add_multi(Router, [Path|Rest], Registered) ->
+    router:add(Router, Path, destination),
+    NowRegistered = setify([Path| Registered]),
+    ?assertEqual(NowRegistered, setify(router:paths(Router))),
+    add_multi(Router, Rest, NowRegistered).
+
+remove_multi(_Router, []) ->
+    ok;
+remove_multi(Router, [Path|Rest]) ->
+    router:remove_path(Router, Path, destination),
+    ?assertEqual(setify(router:paths(Router)), lists:sort(Rest)),
+    remove_multi(Router, Rest).
+
+setify(L) ->
+    S = sets:from_list(L),
+    L1 = sets:to_list(S),
+    lists:sort(L1).
+
+random_add_remove_test() ->
+    Router = router:new(),
+    try
+        ?assertEqual(true, proper:quickcheck(subscribe_props(Router), [{to_file, user}, 
+                    {numtests, 200}]))
+    after
+        router:delete(Router)
+    end,
+    ok.
+
