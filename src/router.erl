@@ -23,10 +23,9 @@
 -author("Maas-Maarten Zeeman <mmzeeman@xs4all.nl>").
 
 -export([new/0, delete/1]).
--export([add/3, remove/2]).
+-export([add/3, remove/2, remove_path/3]).
 
 -export([paths/1]).
-
 -export([get_paths/2]).
 
 -export([match/2, match/3]).
@@ -34,20 +33,24 @@
 
 -include_lib("router/include/router.hrl").
 
--record(router, {
-    node_table, %% record(trie_node) 
-    trie_table, %% record(trie) 
-    wildcard_table, %% record(wildcard).
+-ifdef(TEST).
+-include_lib("proper/include/proper.hrl").
+-include_lib("eunit/include/eunit.hrl").
+-endif.
 
-    path_table, % record(path) Table with paths
-    destination_table % record(destination), table with destinations
+-record(router, {
+    node_table :: ets:tid(), %% record(trie_node) 
+    trie_table :: ets:tid() , %% record(trie) 
+    wildcard_table :: ets:tid(), %% record(wildcard).
+    path_table :: ets:tid(), % record(path) Table with paths
+    destination_table :: ets:tid() % record(destination), table with destinations
 }).
 
 
--type route() :: record(route).
+-opaque router() :: #router{}.
+-type route() :: #route{}.
 
--type router() :: record(router).
--type single_level_wildcard() :: '+' | {'+', atom()} | {'+', atom(), binary()} | {'+', atom(), {module(), atom()}}.
+-type single_level_wildcard() :: '+' | {'+', atom()} | {'+', atom(), binary()} | {'+', atom(), {atom(), atom()}}.
 -type multi_level_wildcard() :: '#'.
 -type wildcard() :: single_level_wildcard() | multi_level_wildcard().
 -type path_entry() :: binary() | wildcard().
@@ -55,6 +58,16 @@
 
 -type destination() :: term().
 
+-export_type([
+    router/0, 
+    path/0, 
+    destination/0, 
+    path_entry/0, 
+    wildcard/0, 
+    single_level_wildcard/0, 
+    multi_level_wildcard/0, 
+    route/0
+]).
 
 %%
 %% Internal Records
@@ -146,6 +159,11 @@ remove(Router, Destination) ->
              end || #destination{path=Path}=Dest <- Paths]
     end.
 
+% @doc Remove path
+remove_path(Router, Path, Destination) ->
+    ets:match_delete(Router#router.destination_table, #destination{path=Path, destination=Destination, _='_'}),
+    try_remove_path(Router, Path).
+
 
 % @doc Get all paths registered in the router.
 -spec paths(router()) -> list(path()).
@@ -155,7 +173,7 @@ paths(Router) ->
 
 %% @doc Get the associated paths from a match spec. 
 %%
--spec get_paths(router(), term()) -> term().
+-spec get_paths(router(), term()) -> list({path(), destination()}).
 get_paths(#router{destination_table=DestTable}, MatchSpec) ->
     Objects = ets:match_object(DestTable, #destination{path='_', destination=MatchSpec}),
     [{Path, Dest} || #destination{path=Path, destination=Dest} <- Objects].
@@ -411,8 +429,6 @@ path(Path) ->
 
 -ifdef(TEST).
 
--include_lib("eunit/include/eunit.hrl").
-
 add_wildcard_routes_test() ->
     Router = new(),
     _ = router:add(Router, [<<"a">>, <<"b">>], a),
@@ -470,5 +486,30 @@ triples_test() ->
             {[<<"a">>,<<"b">>,<<"c">>],<<"d">>,[<<"a">>,<<"b">>,<<"c">>,<<"d">>]}], T),
 
     ok.
+
+triples_props() ->
+    ?FORALL(
+        Path,
+        list(weighted_union([
+                    {1, single_level_wildcard()}, 
+                    {5, binary()}
+                ])),
+        begin
+                Triples = triples(Path),
+
+                case Path of 
+                    [] ->
+                        ?assertEqual(1, length(Triples)),
+                        true;
+                    _ -> 
+                        ?assertEqual(length(Triples), length(Path)),
+                        true
+                end
+        end).
+
+triples_props_test() ->
+    ?assertEqual(true, proper:quickcheck(triples_props(), [{to_file, user}])),
+    ok.
+
 
 -endif.
