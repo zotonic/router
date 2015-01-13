@@ -22,7 +22,7 @@
 
 -author("Maas-Maarten Zeeman <mmzeeman@xs4all.nl>").
 
--export([new/0, delete/1]).
+-export([new/0, new/1, delete/1]).
 -export([info/1]).
 
 -export([add/3, remove/2, remove_path/3]).
@@ -127,18 +127,31 @@ new() ->
         path_table=PathTable, 
         destination_table=DestinationTable}.
 
+% @doc
+-spec new(atom()) -> ok.
+new(Name) ->
+    Router = new(),
+    ok = router_reg:register(Name, Router),
+    Name.
+
 %% @doc Get usage statistics 
 %%
-info(Router) ->
+info(#router{}=Router) ->
     [{nodes, ets:info(Router#router.node_table, size)}, 
      {edges, ets:info(Router#router.trie_table, size)}, 
      {wildcards, ets:info(Router#router.wildcard_table, size)}, 
      {paths, ets:info(Router#router.path_table, size)}, 
-     {destinations, ets:info(Router#router.destination_table, size)}].
+     {destinations, ets:info(Router#router.destination_table, size)}];
+info(Name) ->
+    info(router_reg:router(Name)).
 
 %% @doc Delete the router. Deletes the all the ets tables.
 %%
 -spec delete(router()) -> true.
+delete(Name) when is_atom(Name) ->
+    Router = router_reg:router(Name),
+    router_reg:unregister(Name),
+    delete(Router);
 delete(#router{node_table=NodeTable, wildcard_table=WildcardTable, trie_table=TrieTable, 
                path_table=PathTable, destination_table=DestinationTable}) ->
     true = ets:delete(NodeTable),
@@ -150,16 +163,18 @@ delete(#router{node_table=NodeTable, wildcard_table=WildcardTable, trie_table=Tr
 % @doc Add a path to the router. Important: Make sure add is called synchronized.
 %
 -spec add(router(), path(), destination()) -> ok.
-add(Router, Path, Destination) ->
+add(#router{}=Router, Path, Destination) ->
     trie_add(Router, Path),
     ets:insert(Router#router.destination_table, #destination{path=Path, destination=Destination}),
-    ok.
+    ok;
+add(Name, Path, Destination) ->
+    add(router_reg:router(Name), Path, Destination).
 
 % @doc Remove a destination. All paths to the destinations are removed. Important:
 % make sure remove is called synchronized.
 %
 -spec remove(router(), destination()) -> ok.
-remove(Router, Destination) ->
+remove(#router{}=Router, Destination) ->
     case ets:match_object(Router#router.destination_table, #destination{destination=Destination, _='_'}) of
         [] -> 
             ignore;
@@ -168,18 +183,24 @@ remove(Router, Destination) ->
                  ets:delete_object(Router#router.destination_table, Dest),
                  try_remove_path(Router, Path)
              end || #destination{path=Path}=Dest <- Paths]
-    end.
+    end;
+remove(Name, Destination) ->
+    remove(router_reg:router(Name), Destination).
 
 % @doc Remove path
-remove_path(Router, Path, Destination) ->
+remove_path(#router{}=Router, Path, Destination) ->
     ets:match_delete(Router#router.destination_table, #destination{path=Path, destination=Destination, _='_'}),
-    try_remove_path(Router, Path).
+    try_remove_path(Router, Path);
+remove_path(Name, Path, Destination) ->
+    remove_path(router_reg:router(Name), Path, Destination).
 
 
 % @doc Get all paths registered in the router.
 -spec paths(router()) -> list(path()).
-paths(Router) ->
-    [Path || #path{name=Path} <- ets:tab2list(Router#router.path_table)].
+paths(#router{}=Router) ->
+    [Path || #path{name=Path} <- ets:tab2list(Router#router.path_table)];
+paths(Name) ->
+    paths(router_reg:router(Name)).
 
 
 %% @doc Get the associated paths from a match spec. 
@@ -187,7 +208,9 @@ paths(Router) ->
 -spec get_paths(router(), term()) -> list({path(), destination()}).
 get_paths(#router{destination_table=DestTable}, MatchSpec) ->
     Objects = ets:match_object(DestTable, #destination{path='_', destination=MatchSpec}),
-    [{Path, Dest} || #destination{path=Path, destination=Dest} <- Objects].
+    [{Path, Dest} || #destination{path=Path, destination=Dest} <- Objects];
+get_paths(Name, MatchSpec) ->
+    get_paths(router_reg:router(Name), MatchSpec).
 
 
 %% @doc Return matching paths. 
@@ -197,7 +220,7 @@ match(Router, Path) ->
     match(Router, Path, []).
 
 -spec match(router(), path(), term()) -> list(path()).
-match(Router, Path, Args) ->
+match(#router{}=Router, Path, Args) ->
     TrieNodes = trie_match(Router, root, Path, Args),
     Paths = [
         begin
@@ -206,7 +229,9 @@ match(Router, Path, Args) ->
                     [#path{name=Name}] -> Name
                 end 
         end || #trie_node{path=NodePath} <- TrieNodes, NodePath =/= undefined],
-    [E || E <- Paths, E =/= undefined].
+    [E || E <- Paths, E =/= undefined];
+match(Name, Path, Args) ->
+    match(router_reg:router(Name), Path, Args).
 
 
 %% @doc Return matching destinations. and
@@ -216,9 +241,11 @@ route(Router, Path) ->
     route(Router, Path, []).
 
 -spec route(router(), path(), term()) -> list(route()).
-route(Router, Path, Args) ->
+route(#router{}=Router, Path, Args) ->
     Matches = match(Router, Path, Args),
-    route1(Router, Path, Matches, []).
+    route1(Router, Path, Matches, []);
+route(Name, Path, Args) ->
+    route(router_reg:router(Name), Path, Args).
 
 route1(_Router, _Path, [], Acc) ->
     lists:flatten(Acc);

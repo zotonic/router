@@ -58,6 +58,26 @@ remove_test() ->
 
     ok.
 
+named_router_test() ->
+    application:start(router),
+
+    test_router = router:new(test_router),
+    _ = router:add(test_router, [<<"a">>, <<"b">>], a),
+    _ = router:add(test_router, [<<"a">>, <<"b">>], b),
+    ?assertEqual(1, length(router:get_paths(test_router, a))),
+    ?assertEqual(1, length(router:get_paths(test_router, b))),
+    router:delete(test_router),
+
+    ok.
+
+
+
+
+
+
+
+
+
 get_paths_test() ->
     Router = router:new(),
 
