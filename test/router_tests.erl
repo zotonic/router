@@ -162,7 +162,8 @@ subscribe_props(Router) ->
        Paths,
        list(list(weighted_union([
                        {1, router:single_level_wildcard()}, 
-                       {5, binary()}
+                       {3, binary()},
+                       {3, integer()}
                    ]))),
        begin 
            %% Test subscribing to the topics one by one.

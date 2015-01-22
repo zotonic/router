@@ -55,7 +55,7 @@
 -type single_level_wildcard() :: '+' | {'+', atom()} | {'+', atom(), binary()} | {'+', atom(), {atom(), atom()}}.
 -type multi_level_wildcard() :: '#'.
 -type wildcard() :: single_level_wildcard() | multi_level_wildcard().
--type path_entry() :: binary() | wildcard().
+-type path_entry() :: binary() | integer() | wildcard().
 -type path() :: list(path_entry()).
 
 -type destination() :: term().
@@ -424,7 +424,6 @@ insert_wildcard(_Router, _NodeId, _Word) ->
 
 do_insert_wildcard(Router, Wildcard) ->
     ets:insert(Router#router.wildcard_table, Wildcard).
-
 
 do_trie_add(Router, Path) ->
     ets:insert(Router#router.path_table, path(Path)),
