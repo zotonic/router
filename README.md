@@ -55,7 +55,7 @@ The following wildcards are implemented:
 
 There is one multi-level wildcard ```'#'``` which matches all elements on the path.
 
-Example wildcard route:
+Example single-level wildcard route:
 
 ```erlang
    router:add(Router, [<<"rsc">>, {'+', id}], {controller_rsc, [{foo, <<"bar">>]})
@@ -67,3 +67,17 @@ proplist. In this case: ```[{route, {controller_rsc, [{foo, <<"bar">>}]}, [{id, 
 
 You get a list of matching destinations, and all elements which are bound in a proplist
 as result.
+
+Example multi-level wildcard route:
+
+```Erlang
+
+    router:add(Router, [<<"truck">>, <<"00001">>, '#'], self())
+```
+
+This will match all routes to ```[<<"truck">>, <<"00001">>]``` and all its sub paths. For 
+example: ```[<<"truck">>, <<"00001">>, <<"temperature">>]``` will match and also 
+```[<<"truck">>, <<"00001">>, <<"location">>]```.
+
+
+
