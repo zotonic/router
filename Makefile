@@ -1,5 +1,6 @@
 REBAR := $(shell which rebar 2>/dev/null || echo ./rebar)
 REBAR_URL := https://github.com/rebar/rebar/wiki/rebar
+DEPSOLVER_PLT=$(CURDIR)/.depsolver_plt
 
 .PHONY: compile test
 
@@ -20,3 +21,10 @@ clean:
         -eval '{ok, saved_to_file} = httpc:request(get, {"$(REBAR_URL)", []}, [], [{stream, "./rebar"}])' \
         -s inets stop -s init stop
 	chmod +x ./rebar
+
+$(DEPSOLVER_PLT):
+	dialyzer --output_plt $(DEPSOLVER_PLT) --build_plt \
+		--apps erts kernel stdlib crypto public_key -r deps
+
+dialyzer: $(DEPSOLVER_PLT)
+	dialyzer --plt $(DEPSOLVER_PLT) -Wrace_conditions --src src
