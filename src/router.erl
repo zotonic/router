@@ -33,7 +33,7 @@
 -export([match/2, match/3]).
 -export([route/2, route/3]).
 
--include_lib("router/include/router.hrl").
+-include_lib("router.hrl").
 
 -ifdef(TEST).
 -include_lib("proper/include/proper.hrl").
