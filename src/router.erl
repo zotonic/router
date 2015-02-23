@@ -175,15 +175,11 @@ add(Name, Path, Destination) ->
 %
 -spec remove(router(), destination()) -> ok.
 remove(#router{}=Router, Destination) ->
-    case ets:match_object(Router#router.destination_table, #destination{destination=Destination, _ = '_'}) of
-        [] -> 
-            ignore;
-        Paths -> 
-            [begin 
-                 ets:delete_object(Router#router.destination_table, Dest),
-                 try_remove_path(Router, Path)
-             end || #destination{path=Path}=Dest <- Paths]
-    end,
+    Paths = ets:match_object(Router#router.destination_table, #destination{destination=Destination, _ = '_'}), 
+    [begin 
+         ets:delete_object(Router#router.destination_table, Dest),
+         try_remove_path(Router, Path)
+     end || #destination{path=Path}=Dest <- Paths],
     ok;
 remove(Name, Destination) ->
     remove(router_reg:router(Name), Destination).
