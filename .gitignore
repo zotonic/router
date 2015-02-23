@@ -4,3 +4,4 @@
 rebar
 .rebar
 deps
+.depsolver_plt
