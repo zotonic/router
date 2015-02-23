@@ -61,7 +61,11 @@ remove_test() ->
 named_router_test() ->
     application:start(router),
 
-    test_router = router:new(test_router),
+    %% Create a named router.
+    Router = router:new(test_router),
+    ?assertEqual(router, element(1, Router)),
+
+    %% Using the api via the name only works.
     _ = router:add(test_router, [<<"a">>, <<"b">>], a),
     _ = router:add(test_router, [<<"a">>, <<"b">>], b),
     ?assertEqual(1, length(router:get_paths(test_router, a))),

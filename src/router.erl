@@ -49,7 +49,7 @@
 }).
 
 
--opaque router() :: #router{}.
+-opaque router() :: atom() | #router{}.
 -type route() :: #route{}.
 
 -type single_level_wildcard() :: '+' | {'+', atom()} | {'+', atom(), binary()} | {'+', atom(), {atom(), atom()}}.
@@ -58,7 +58,7 @@
 -type path_entry() :: binary() | integer() | wildcard().
 -type path() :: list(path_entry()).
 
--type destination() :: term().
+-type destination() :: any().
 
 -export_type([
     router/0, 
@@ -128,11 +128,11 @@ new() ->
         destination_table=DestinationTable}.
 
 % @doc
--spec new(atom()) -> ok.
+-spec new(atom()) -> router().
 new(Name) ->
     Router = new(),
     ok = router_reg:register(Name, Router),
-    Name.
+    Router.
 
 %% @doc Get usage statistics 
 %%
@@ -175,7 +175,7 @@ add(Name, Path, Destination) ->
 %
 -spec remove(router(), destination()) -> ok.
 remove(#router{}=Router, Destination) ->
-    case ets:match_object(Router#router.destination_table, #destination{destination=Destination, _='_'}) of
+    case ets:match_object(Router#router.destination_table, #destination{destination=Destination, _ = '_'}) of
         [] -> 
             ignore;
         Paths -> 
@@ -183,7 +183,8 @@ remove(#router{}=Router, Destination) ->
                  ets:delete_object(Router#router.destination_table, Dest),
                  try_remove_path(Router, Path)
              end || #destination{path=Path}=Dest <- Paths]
-    end;
+    end,
+    ok;
 remove(Name, Destination) ->
     remove(router_reg:router(Name), Destination).
 
