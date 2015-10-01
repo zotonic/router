@@ -90,7 +90,7 @@
 }).
 
 -record(trie, {
-    edge :: record(trie_edge),
+    edge :: #trie_edge{},
     node_id :: path()
 }).
 
@@ -453,7 +453,7 @@ triples([A|Rest], Path, Acc) ->
     NewPath = Path ++ [A],
     triples(Rest, NewPath, [{Path, A, NewPath}|Acc]).
 
--spec path(path()) -> record(path).
+-spec path(path()) -> #path{}.
 path(Path) ->
     #path{name=Path}.
 
