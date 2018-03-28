@@ -260,7 +260,7 @@ bind(Path, Match) ->
 
 bind([], [], Acc) ->
     lists:reverse(Acc);
-bind([_H|_Path]=P, ['#'|_Rest], Acc) ->
+bind(P, ['#'], Acc) ->
     lists:reverse([{'#', P}|Acc]);
 bind([H|Path], ['+'|Match], Acc) ->
     bind(Path, Match, [H|Acc]);
