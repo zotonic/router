@@ -1,5 +1,6 @@
-REBAR := $(shell which rebar 2>/dev/null || echo ./rebar)
-REBAR_URL := https://github.com/rebar/rebar/wiki/rebar
+REBAR := ./rebar3
+REBAR_URL := https://s3.amazonaws.com/rebar3/rebar3
+ERL       ?= erl
 DEPSOLVER_PLT=$(CURDIR)/.depsolver_plt
 
 .PHONY: compile test
@@ -7,20 +8,23 @@ DEPSOLVER_PLT=$(CURDIR)/.depsolver_plt
 all: compile
 
 compile: $(REBAR)
-	$(REBAR) get-deps compile
+	$(REBAR) compile
+
+shell: $(REBAR)
+	$(REBAR) shell
 
 test: $(REBAR)
-	$(REBAR) get-dep compile
-	$(REBAR) eunit -v skip_deps=true
+	$(REBAR) eunit -v
+	# $(REBAR) ct --config rebar.test.config
 
-clean:
+clean: $(REBAR)
 	$(REBAR) clean
 
-./rebar:
-	erl -noshell -s inets start -s ssl start \
-        -eval '{ok, saved_to_file} = httpc:request(get, {"$(REBAR_URL)", []}, [], [{stream, "./rebar"}])' \
-        -s inets stop -s init stop
-	chmod +x ./rebar
+./rebar3:
+	$(ERL) -noshell -s inets -s ssl \
+	  -eval '{ok, saved_to_file} = httpc:request(get, {"$(REBAR_URL)", []}, [], [{stream, "./rebar3"}])' \
+	  -s init stop
+	chmod +x ./rebar3
 
 $(DEPSOLVER_PLT):
 	dialyzer --output_plt $(DEPSOLVER_PLT) --build_plt \

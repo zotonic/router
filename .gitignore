@@ -1,7 +1,8 @@
 .eunit
 *.beam
-/ebin/router.app
-rebar
-.rebar
+ebin/
+_build/
+rebar3
+.rebar3
 deps
 .depsolver_plt

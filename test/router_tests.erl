@@ -75,13 +75,6 @@ named_router_test() ->
     ok.
 
 
-
-
-
-
-
-
-
 get_paths_test() ->
     Router = router:new(),
 
@@ -206,13 +199,17 @@ setify(L) ->
     L1 = sets:to_list(S),
     lists:sort(L1).
 
-random_add_remove_test() ->
-    Router = router:new(),
-    try
-        ?assertEqual(true, proper:quickcheck(subscribe_props(Router), [{to_file, user}, 
-                    {numtests, 200}]))
-    after
-        router:delete(Router)
-    end,
-    ok.
-
+random_add_remove_test_() ->
+    {timeout,
+     20,
+     ?_assertEqual(
+        true,
+        begin
+            Router = router:new(),
+            try
+                proper:quickcheck(subscribe_props(Router), [{to_file, user}, {numtests, 200}])
+            after
+                router:delete(Router)
+            end
+        end)
+    }.
