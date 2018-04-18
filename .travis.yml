@@ -1,0 +1,27 @@
+language: erlang
+otp_release:
+  - 20.2
+  - 19.0
+jobs:
+  include:
+    - stage: deploy
+      otp_release: 20.2
+      script: skip
+      deploy:
+        provider: script
+        script: ./hex.sh
+        skip_cleanup: true
+        on:
+          tags: true
+          all_branches: true
+script: make clean test
+sudo: false
+branches:
+  only:
+    - master
+notifications:
+  email:
+    recipients:
+      - zotonic-commits@googlegroups.com
+    on_success: change #[always|never|change] # default: change
+    on_failure: always #[always|never|change] # default: always
