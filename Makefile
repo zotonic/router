@@ -3,7 +3,7 @@ REBAR_URL := https://s3.amazonaws.com/rebar3/rebar3
 ERL       ?= erl
 DEPSOLVER_PLT=$(CURDIR)/.depsolver_plt
 
-.PHONY: compile test
+.PHONY: compile test shell dialyzer clean
 
 all: compile
 
@@ -14,8 +14,13 @@ shell: $(REBAR)
 	$(REBAR) shell
 
 test: $(REBAR)
-	$(REBAR) eunit -v
-	# $(REBAR) ct --config rebar.test.config
+	$(REBAR) as test eunit -v
+
+dialyzer: $(REBAR)
+	$(REBAR) dialyzer
+
+xref: $(REBAR)
+	$(REBAR) as test xref
 
 clean: $(REBAR)
 	$(REBAR) clean
@@ -25,10 +30,3 @@ clean: $(REBAR)
 	  -eval '{ok, saved_to_file} = httpc:request(get, {"$(REBAR_URL)", []}, [], [{stream, "./rebar3"}])' \
 	  -s init stop
 	chmod +x ./rebar3
-
-$(DEPSOLVER_PLT):
-	dialyzer --output_plt $(DEPSOLVER_PLT) --build_plt \
-		--apps erts kernel stdlib crypto public_key -r deps
-
-dialyzer: $(DEPSOLVER_PLT)
-	dialyzer --plt $(DEPSOLVER_PLT) -Wrace_conditions --src src
