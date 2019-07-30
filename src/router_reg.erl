@@ -38,9 +38,9 @@
 ]).
 
 -record(registration, {
-    name :: atom(),
-    router :: router:router(),
-    monitor_ref :: reference(),
+    name :: atom() | '_',
+    router :: router:router() | '_',
+    monitor_ref :: reference() | '_',
     owner_pid :: pid()
 }).
 

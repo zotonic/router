@@ -49,7 +49,7 @@
 }).
 
 
--opaque router() :: atom() | #router{}.
+-type router() :: atom() | #router{}.
 -type route() :: #route{}.
 
 -type single_level_wildcard() :: '+' | {'+', atom()} | {'+', atom(), binary()} | {'+', atom(), {atom(), atom()}}.
@@ -80,29 +80,29 @@
 }).
 
 -record(trie_edge, {
-    node_id :: path(),
+    node_id :: path() | 'root',
     word :: path_entry()
 }).
 
 -record(wildcard, {
-    node_id :: path(),     
+    node_id :: path() | 'root',
     wildcard :: single_level_wildcard()
 }).
 
 -record(trie, {
     edge :: #trie_edge{},
-    node_id :: path()
+    node_id :: path() | 'root'
 }).
 
 -record(trie_node, {
-    node_id :: path(),
-    edge_count = 0 :: pos_integer(),
+    node_id :: path() | 'root',
+    edge_count = 0 :: non_neg_integer(),
 
-    path :: path()
-}). 
+    path :: path() | 'undefined'
+}).
 
 -record(destination, {
-    path :: path(),
+    path :: path() | '_',
     destination :: destination()
 }).
 
