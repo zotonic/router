@@ -1,0 +1,6 @@
+@author Zotonic Team 
+   [http://zotonic.com]
+@title router
+@doc  In-memory trie based path router for Erlang. It can be used to route paths to destinations.
+@copyright MOZILLA PUBLIC LICENSE Version 1.1
+@since 2014

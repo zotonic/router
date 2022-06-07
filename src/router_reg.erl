@@ -1,8 +1,9 @@
+%% @private
 %% @author Maas-Maarten Zeeman <mmzeeman@xs4all.nl>
 %% @copyright 2015 Maas-Maarten Zeeman
 %%
 %% @doc Simple registry for routers.
-%% 
+%% @end 
 %%
 %% The contents of this file are subject to the Mozilla Public License
 %% Version 1.1 (the "License"); you may not use this file except in

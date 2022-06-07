@@ -22,8 +22,19 @@ dialyzer: $(REBAR)
 xref: $(REBAR)
 	$(REBAR) as test xref
 
-clean: $(REBAR)
+clean: $(REBAR) clean_doc
 	$(REBAR) clean
+
+clean_doc:
+	@rm -f doc/*.html
+	@rm -f doc/erlang.png
+	@rm -f doc/edoc-info
+
+doc:  $(REBAR)
+	$(REBAR) edoc
+
+doc_private: $(REBAR)
+	$(REBAR) as doc_private edoc
 
 ./rebar3:
 	$(ERL) -noshell -s inets -s ssl \

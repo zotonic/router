@@ -6,3 +6,9 @@ rebar3
 .rebar3
 deps
 .depsolver_plt
+doc/*
+!doc/style.css
+!doc/overview.edoc
+!doc/img
+!doc/img/*
+!doc/img/logo.png
