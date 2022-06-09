@@ -3,7 +3,7 @@
 [![Hex.pm Downloads][hexpm downloads]][hexpm]
 [![Hex.pm Documentation][hexdocs documentation]][hexdocs]
 [![Erlang Versions][erlang version badge]][gh]
-
+[![License][license]](LICENSE)
 
 router
 ======
@@ -97,3 +97,4 @@ example: `[<<"truck">>, <<"00001">>, <<"temperature">>]` will match and also
 [gh]: https://github.com/zotonic/router/actions/workflows/test.yaml
 [gh badge]: https://github.com/zotonic/router/workflows/Test/badge.svg
 [erlang version badge]: https://img.shields.io/badge/Supported%20Erlang%2FOTP-21%20to%2023-blue.svg?style=flat-curcle
+[license]: https://img.shields.io/badge/License-MIT-blue.svg "MIT"
