@@ -96,5 +96,5 @@ example: `[<<"truck">>, <<"00001">>, <<"temperature">>]` will match and also
 [hexdocs]: https://hexdocs.pm/router
 [gh]: https://github.com/zotonic/router/actions/workflows/test.yaml
 [gh badge]: https://github.com/zotonic/router/workflows/Test/badge.svg
-[erlang version badge]: https://img.shields.io/badge/Supported%20Erlang%2FOTP-22%20to%2024-blue.svg?style=flat-curcle
+[erlang version badge]: https://img.shields.io/badge/Supported%20Erlang%2FOTP-22%20to%2025-blue.svg?style=flat-curcle
 [license]: https://img.shields.io/badge/License-MIT-blue.svg "MIT"
