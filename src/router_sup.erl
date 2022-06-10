@@ -1,3 +1,4 @@
+%% @private
 %% @author Maas-Maarten <mmzeeman@xs4all.nl>
 %% @copyright 2015 Maas-Maarten Zeeman
 

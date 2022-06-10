@@ -111,7 +111,7 @@
 %%
 
 %% @doc Create a new router. Creates ets table owned by the calling process.
-%%
+
 -spec new() -> router().
 new() ->
     NodeTable = ets:new(node_table, [protected, set, {read_concurrency, true}, {keypos, 2}]),
@@ -127,7 +127,8 @@ new() ->
         path_table=PathTable, 
         destination_table=DestinationTable}.
 
-% @doc
+%% @doc Create a new named router.
+
 -spec new(atom()) -> router().
 new(Name) ->
     Router = new(),
@@ -135,7 +136,7 @@ new(Name) ->
     Router.
 
 %% @doc Get usage statistics 
-%%
+
 info(#router{}=Router) ->
     [{nodes, ets:info(Router#router.node_table, size)}, 
      {edges, ets:info(Router#router.trie_table, size)}, 
@@ -146,7 +147,7 @@ info(Name) ->
     info(router_reg:router(Name)).
 
 %% @doc Delete the router. Deletes the all the ets tables.
-%%
+
 -spec delete(router()) -> true.
 delete(Name) when is_atom(Name) ->
     Router = router_reg:router(Name),
@@ -160,8 +161,8 @@ delete(#router{node_table=NodeTable, wildcard_table=WildcardTable, trie_table=Tr
     true = ets:delete(PathTable),
     true = ets:delete(DestinationTable).
 
-% @doc Add a path to the router. Important: Make sure add is called synchronized.
-%
+%% @doc Add a path to the router. Important: Make sure add is called synchronized.
+
 -spec add(router(), path(), destination()) -> ok.
 add(#router{}=Router, Path, Destination) ->
     trie_add(Router, Path),
@@ -170,9 +171,9 @@ add(#router{}=Router, Path, Destination) ->
 add(Name, Path, Destination) ->
     add(router_reg:router(Name), Path, Destination).
 
-% @doc Remove a destination. All paths to the destinations are removed. Important:
-% make sure remove is called synchronized.
-%
+%% @doc Remove a destination. All paths to the destinations are removed. Important:
+%% make sure remove is called synchronized.
+
 -spec remove(router(), destination()) -> ok.
 remove(#router{}=Router, Destination) ->
     Paths = ets:match_object(Router#router.destination_table, #destination{destination=Destination, _ = '_'}), 
@@ -184,7 +185,8 @@ remove(#router{}=Router, Destination) ->
 remove(Name, Destination) ->
     remove(router_reg:router(Name), Destination).
 
-% @doc Remove path
+%% @doc Remove path
+
 remove_path(#router{}=Router, Path, Destination) ->
     ets:match_delete(Router#router.destination_table, #destination{path=Path, destination=Destination, _='_'}),
     try_remove_path(Router, Path);
@@ -192,7 +194,8 @@ remove_path(Name, Path, Destination) ->
     remove_path(router_reg:router(Name), Path, Destination).
 
 
-% @doc Get all paths registered in the router.
+%% @doc Get all paths registered in the router.
+
 -spec paths(router()) -> list(path()).
 paths(#router{}=Router) ->
     [Path || #path{name=Path} <- ets:tab2list(Router#router.path_table)];
@@ -201,7 +204,7 @@ paths(Name) ->
 
 
 %% @doc Get the associated paths from a match spec. 
-%%
+
 -spec get_paths(router(), term()) -> list({path(), destination()}).
 get_paths(#router{destination_table=DestTable}, MatchSpec) ->
     Objects = ets:match_object(DestTable, #destination{path='_', destination=MatchSpec}),
@@ -211,7 +214,7 @@ get_paths(Name, MatchSpec) ->
 
 
 %% @doc Return matching paths. 
-%%
+
 -spec match(router(), path()) -> list(path()).
 match(Router, Path) ->
     match(Router, Path, []).
@@ -232,7 +235,7 @@ match(Name, Path, Args) ->
 
 
 %% @doc Return matching destinations. and
-%%
+
 -spec route(router(), path()) -> list(route()).
 route(Router, Path) ->
     route(Router, Path, []).
@@ -254,7 +257,7 @@ route1(Router, Path, [Match|Matches], Acc) ->
 
 
 %% Bind variables from the match to the path
-%%
+
 bind(Path, Match) ->
     bind(Path, Match, []).
 
