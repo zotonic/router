@@ -1,8 +1,8 @@
 %% @author Maas-Maarten Zeeman <mmzeeman@xs4all.nl>
-%% @copyright 2014-2015 Maas-Maarten Zeeman
+%% @copyright 2014-2025 Maas-Maarten Zeeman
 %%
 %% @doc In-memory trie router for fast parallel path lookups with wildcards.
-%% Copyright 2014-2015 Maas-Maarten Zeeman
+%% Copyright 2014-2025 Maas-Maarten Zeeman
 %%
 
 %% The contents of this file are subject to the Mozilla Public License
@@ -22,7 +22,7 @@
 
 -author("Maas-Maarten Zeeman <mmzeeman@xs4all.nl>").
 
--export([new/0, new/1, delete/1]).
+-export([new/0, new/1, new/2, delete/1]).
 -export([info/1]).
 
 -export([add/3, remove/2, remove_path/3]).
@@ -44,10 +44,9 @@
     node_table :: ets:tid(), %% record(trie_node) 
     trie_table :: ets:tid() , %% record(trie) 
     wildcard_table :: ets:tid(), %% record(wildcard).
-    path_table :: ets:tid(), % record(path) Table with paths
-    destination_table :: ets:tid() % record(destination), table with destinations
+    path_table :: ets:tid(), %% record(path) Table with paths
+    destination_table :: ets:tid() %% record(destination), table with destinations
 }).
-
 
 -type router() :: atom() | #router{}.
 -type route() :: #route{}.
@@ -106,6 +105,11 @@
     destination :: destination()
 }).
 
+-define(DEFAULT_ETS_TWEAK_OPTIONS, [
+    {read_concurrency, true},
+    {write_concurrency, auto}
+]).
+
 %%
 %% Api
 %%
@@ -114,26 +118,33 @@
 
 -spec new() -> router().
 new() ->
-    NodeTable = ets:new(node_table, [protected, set, {read_concurrency, true}, {keypos, 2}]),
-    TrieTable = ets:new(trie_table, [protected, set, {read_concurrency, true}, {keypos, 2}]),
-
-    WildcardTable = ets:new(wildcard_table, [protected, bag, {read_concurrency, true}, {keypos, 2}]),
-    PathTable = ets:new(path_table, [protected, bag, {read_concurrency, true}, {keypos, 2}]),
-    DestinationTable = ets:new(destination_table, [protected, bag, {read_concurrency, true}, {keypos, 2}]),
-
-    #router{node_table=NodeTable, 
-        trie_table=TrieTable, 
-        wildcard_table=WildcardTable,
-        path_table=PathTable, 
-        destination_table=DestinationTable}.
+    new_router(?DEFAULT_ETS_TWEAK_OPTIONS).
 
 %% @doc Create a new named router.
 
 -spec new(atom()) -> router().
 new(Name) ->
-    Router = new(),
+    new(Name, ?DEFAULT_ETS_TWEAK_OPTIONS).
+
+-spec new(atom(), list()) -> router().
+new(Name, EtsTweakOptions) ->
+    Router = new_router(EtsTweakOptions),
     ok = router_reg:register(Name, Router),
     Router.
+
+new_router(EtsTweakOptions) ->
+    NodeTable = ets:new(node_table, [protected, set, {keypos, 2} | EtsTweakOptions]),
+    TrieTable = ets:new(trie_table, [protected, set, {keypos, 2} | EtsTweakOptions]),
+
+    WildcardTable = ets:new(wildcard_table, [protected, bag, {keypos, 2} | EtsTweakOptions]),
+    PathTable = ets:new(path_table, [protected, bag, {keypos, 2} | EtsTweakOptions]),
+    DestinationTable = ets:new(destination_table, [protected, bag, {keypos, 2} | EtsTweakOptions]),
+
+    #router{node_table=NodeTable,
+        trie_table=TrieTable,
+        wildcard_table=WildcardTable,
+        path_table=PathTable,
+        destination_table=DestinationTable}.
 
 %% @doc Get usage statistics 
 
